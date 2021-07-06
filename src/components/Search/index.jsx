@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import axios from 'axios'
+import PubSub from 'pubsub-js'
 
 export default class Search extends Component {
     keyWordContainer = React.createRef()
@@ -10,13 +11,14 @@ export default class Search extends Component {
         const {value} = this.keyWordContainer.current;
         //校验数据
         if(!value.trim())alert("输入不能为空");
+        PubSub.publish("updateListState", { isFirst: false, isLoading: true })
         //发送请求
         axios.get(`https://api.github.com/search/users?q=${value}`)
             .then((response)=>{
-                console.log(response.data);
-                this.props.saveUsers(response.data.items)
-             },err => {
-                console.log(err);
+                const {items} = response.data;
+                PubSub.publish("updateListState", { users: items, isLoading: false })
+            }, err => {
+                PubSub.publish("updateListState", { isLoading: false, errorMsg: err.message })
              })
     }
 
